@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup
 import sqlite3
+from sheets import write_to_spread
 
 conn = sqlite3.connect("yt.sqlite")
+
 
 def find_one(soup_target, tag_target, query):
     search = soup_target.find_all(tag_target, query)
@@ -26,14 +28,10 @@ def convert_to_seconds(time_raw):
     return duration
 
 
-def update_wl():
-    tag = "a:yt-simple-endpoint"
-
-    soup = BeautifulSoup(open('wl2.htm', 'r'), 'html.parser')
+def update_wl(in_file):
+    soup = BeautifulSoup(open(in_file, 'r'), 'html.parser')
     container = soup.find_all('div', {"id": "contents", "class": "ytd-playlist-video-list-renderer"})[0]
     videos = container.find_all('div', {"id": "content"})
-
-    parsed_videos = []
 
     for video in videos:
         parsed_video = {'title': '', 'duration': 0, 'url': '', 'channel': None}
@@ -43,15 +41,11 @@ def update_wl():
         duration_raw = find_one(video, 'span', {"class": "ytd-thumbnail-overlay-time-status-renderer"})
         if duration_raw:
             parsed_video['duration'] = convert_to_seconds(duration_raw.text.strip())
-        else:
-            continue
 
         # Title
         title_raw = find_one(video, 'span', {"id": "video-title"})
         if title_raw:
             parsed_video['title'] = title_raw.text.strip()
-        else:
-            continue
 
         # URL
         url_raw = find_one(video, 'a', {"id": "thumbnail"})
@@ -67,6 +61,8 @@ def update_wl():
                 parsed_video['url'] = url_href[i1+2: i2]
             else:
                 continue
+        else:
+            continue
 
         # channel name
         channel_raw = find_one(find_one(video, 'yt-formatted-string', {"class": "ytd-channel-name"}), "a", {})
@@ -81,8 +77,6 @@ def update_wl():
             channels = c.fetchall()
             if len(channels) == 1:
                 parsed_video['channel'] = channels[0][0]
-        else:
-            continue
 
         c = conn.cursor()
         if vid_id:
@@ -93,10 +87,19 @@ def update_wl():
 
 
 def get_videos():
+    rows = []
     c = conn.cursor()
-    c.execute("SELECT title, duration, url FROM watchLater ORDER BY duration DESC")
+    c.execute("SELECT title, duration, url FROM watchLater ORDER BY duration ASC")
     videos = c.fetchall()
+    outfile = open("watchLater.txt", "w")
     for video in videos:
-        print(f"{video[1]}s --> https://www.youtube.com/watch?v={video[2]} | {video[0]}")
+        if video[1] > 0:
+            outfile.write(f"{video[1]}s --> https://www.youtube.com/watch?v={video[2]} | {video[0]}\n")
+            rows.append([video[0], f"https://www.youtube.com/watch?v={video[2]}", video[1]])
+    outfile.close()
+    if write_to_spread(rows):
+        print("Sheets written!")
 
+
+#update_wl('wl.htm')
 get_videos()

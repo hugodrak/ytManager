@@ -4,3 +4,8 @@
 *.html
 .idea/
 wl*
+credentials.json
+watchLater.txt
+*.pickle
+__pycache__
+sheet.id

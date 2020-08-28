@@ -176,7 +176,6 @@ def get_subscribe_count(soup, channel_id, subscribers):
 
 get_videos()
 
-# get_subscribers("./YouTube.html")
-# get_subscribe_counts()
-# set_scores()
-
+#get_subscribers("./YouTube.html")
+#get_subscribe_counts()
+#set_scores()

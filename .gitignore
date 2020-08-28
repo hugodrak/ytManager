@@ -1,0 +1,6 @@
+*.sqlite
+*.db
+*.htm
+*.html
+.idea/
+wl*

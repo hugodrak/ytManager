@@ -9,3 +9,6 @@ watchLater.txt
 *.pickle
 __pycache__
 sheet.id
+secret*
+*.csv
+*.pk
